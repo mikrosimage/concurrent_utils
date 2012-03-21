@@ -8,18 +8,18 @@
 #ifndef RESPONSE_HPP_
 #define RESPONSE_HPP_
 
-#include "Slot.hpp"
+#include "slot.hpp"
 
 namespace concurrent {
 
-struct Response : private Slot<bool> {
+struct response : private slot<bool> {
     void ack() {
-        Slot<bool>::set(true);
+        slot<bool>::set(true);
     }
 
     void wait() {
         bool dummy;
-        Slot<bool>::waitGet(dummy);
+        slot<bool>::waitGet(dummy);
     }
 };
 

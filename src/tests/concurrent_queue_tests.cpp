@@ -1,5 +1,5 @@
-#include <concurrent/QueueAdaptor.hpp>
-#include <concurrent/Queue.hpp>
+#include <concurrent/queue_adaptor.hpp>
+#include <concurrent/queue.hpp>
 
 #include <list>
 #include <vector>
@@ -11,28 +11,27 @@
 #include <boost/test/unit_test.hpp>
 
 using namespace std;
-using namespace concurrent;
 
-typedef Queue<int> IntConcurrentQueue;
+typedef concurrent::queue<int> IntQueue;
 
 BOOST_AUTO_TEST_SUITE( ConcurrentQueueTestSuite )
 
 BOOST_AUTO_TEST_CASE( pushPop )
 {
-    IntConcurrentQueue queue;
-    queue.push(5);
+    IntQueue q;
+    q.push(5);
     int unused;
-    BOOST_CHECK( queue.tryPop(unused) ); // can pop
+    BOOST_CHECK( q.tryPop(unused) ); // can pop
     BOOST_CHECK_EQUAL( unused, 5 ); // value is 5
 }
 
 BOOST_AUTO_TEST_CASE( clean )
 {
-    IntConcurrentQueue queue;
-    queue.push(5);
-    queue.clear();
+    IntQueue q;
+    q.push(5);
+    q.clear();
     int unused;
-    BOOST_CHECK( !queue.tryPop(unused) ); // queue is empty
+    BOOST_CHECK( !q.tryPop(unused) ); // queue is empty
 }
 
 BOOST_AUTO_TEST_CASE( drainToCompatible )
@@ -45,9 +44,9 @@ BOOST_AUTO_TEST_CASE( drainToCompatible )
         /**
          * Pushing elements one by one
          */
-        IntConcurrentQueue queue;
+        IntQueue queue;
 
-        QueueAdapter<IntConcurrentQueue> adapted(queue);
+        concurrent::queue_adapter<IntQueue> adapted(queue);
         copy(initialValues.begin(), initialValues.end(), back_inserter(adapted));
 
         IntVector result;
@@ -62,7 +61,7 @@ BOOST_AUTO_TEST_CASE( drainToCompatible )
          * Pushing elements at once
          */
         IntList mutableCopy(initialValues);
-        IntConcurrentQueue queue;
+        IntQueue queue;
         queue.drainFrom(mutableCopy);
         BOOST_CHECK( mutableCopy.empty() ); // source is empty
 

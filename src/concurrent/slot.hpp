@@ -8,7 +8,7 @@
 #ifndef CONCURRENTSLOT_HPP_
 #define CONCURRENTSLOT_HPP_
 
-#include "Common.hpp"
+#include "common.hpp"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
@@ -24,11 +24,11 @@ namespace concurrent {
  * By setting terminate to true, getters/setters will throw a terminated exception
  */
 template<typename T>
-struct Slot : private boost::noncopyable {
-    Slot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
+struct slot : private boost::noncopyable {
+    slot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
     }
 
-    Slot(const T&object) : m_SharedObject(object), m_SharedObjectSet(true), m_SharedTerminate(false) {
+    slot(const T&object) : m_SharedObject(object), m_SharedObjectSet(true), m_SharedTerminate(false) {
     }
 
     void set(const T& object) {

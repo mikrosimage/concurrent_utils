@@ -3,3 +3,6 @@ project
     : build-dir bin
     ;
 use-project /boost 						: [ modules.peek : BOOST_ROOT ] ;
+
+alias tests : src/tests ;
+alias examples : src/examples ;

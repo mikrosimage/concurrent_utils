@@ -5,16 +5,16 @@
  *      Author: Guillaume Chatelet
  */
 
-#include <concurrent/Slot.hpp>
-#include <concurrent/Response.hpp>
+#include <concurrent/slot.hpp>
+#include <concurrent/response.hpp>
 
 #include <boost/thread.hpp>
 
 #include <cstdio>
 #include <cstdlib>
 
-concurrent::Slot<int> input; ///< shared
-concurrent::Response response; ///< shared
+concurrent::slot<int> input; ///< shared
+concurrent::response response; ///< shared
 
 void worker() {
     try {

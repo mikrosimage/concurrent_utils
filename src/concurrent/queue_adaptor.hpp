@@ -8,15 +8,15 @@
 #ifndef CONCURRENTQUEUEADAPTOR_HPP_
 #define CONCURRENTQUEUEADAPTOR_HPP_
 
-#include <concurrent/Queue.hpp>
+#include <concurrent/queue.hpp>
 
 namespace concurrent {
 
 template<typename Queue>
-struct QueueAdapter {
+struct queue_adapter {
     typedef typename Queue::value_type value_type;
     typedef typename Queue::const_reference const_reference;
-    QueueAdapter(Queue& q) :
+    queue_adapter(Queue& q) :
             m_Queue(q) {
     }
     void push_back(const_reference & t) {

@@ -1,7 +1,12 @@
 
-exe ConcurrentSlot : ConcurrentSlot.cpp ;
+local files = [ glob *.cpp ] ;
+local targets = $(files:B) ;
 
-install bin		: ConcurrentSlot 
+for local target in $(targets) {
+	exe $(target) : $(target).cpp ;
+}
+
+install bin		: $(targets)
 				:
 				    <install-dependencies>on
 				    <install-type>SHARED_LIB
