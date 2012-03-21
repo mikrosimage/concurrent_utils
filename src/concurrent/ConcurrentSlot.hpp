@@ -1,41 +1,42 @@
 /*
- * BlockingAccessor.hpp
+ * ConcurrentSlot.hpp
  *
- *  Created on: 22 nov. 2011
+ *  Created on: Mar 21, 2012
  *      Author: Guillaume Chatelet
  */
 
-#ifndef BLOCKINGACCESSOR_HPP_
-#define BLOCKINGACCESSOR_HPP_
+#ifndef CONCURRENTSLOT_HPP_
+#define CONCURRENTSLOT_HPP_
+
+#include "Common.hpp"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/condition_variable.hpp>
 
 #include <cassert>
-#include <stdexcept>
 
 namespace concurrent {
 
 /**
- * Exception thrown by BlockingAccessor when terminate flag is set
- */
-struct terminated : public std::exception {};
-
-/**
  * Thread safe access to a T object
  *
- * By setting terminate to true, each access to this slot will generate a terminated exception
+ * By setting terminate to true, getters/setters will throw a terminated exception
  */
 template<typename T>
-struct BlockingAccessor : private boost::noncopyable {
-    BlockingAccessor(const T&object) : m_SharedTerminate(false) {
-        internal_set(object);
+struct ConcurrentSlot : private boost::noncopyable {
+    ConcurrentSlot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
+    }
+
+    ConcurrentSlot(const T&object) : m_SharedObject(object), m_SharedObjectSet(true), m_SharedTerminate(false) {
     }
 
     void set(const T& object) {
         // locking the shared object
         ::boost::mutex::scoped_lock lock(m_Mutex);
+
+        checkTermination();
+
         internal_set(object);
         lock.unlock();
         // notifying shared structure is updated
@@ -43,7 +44,7 @@ struct BlockingAccessor : private boost::noncopyable {
     }
 
     void terminate(bool value = true) {
-        ::boost::unique_lock<boost::mutex> lock(m_TerminateMutex);
+        ::boost::unique_lock<boost::mutex> lock(m_Mutex);
         m_SharedTerminate = value;
         lock.unlock();
         m_Condition.notify_all();
@@ -54,7 +55,7 @@ struct BlockingAccessor : private boost::noncopyable {
 
         checkTermination();
 
-        // blocking until at least one element in the list
+        // blocking until set or terminate
         while (!m_SharedObjectSet) {
             m_Condition.wait(lock);
             checkTermination();
@@ -76,7 +77,7 @@ struct BlockingAccessor : private boost::noncopyable {
     }
 private:
     inline void checkTermination() const {
-        ::boost::lock_guard<boost::mutex> lock(m_TerminateMutex);
+        // mutex *must* be locked here, we are reading a shared variable
         if (m_SharedTerminate)
             throw terminated();
     }
@@ -94,12 +95,11 @@ private:
 
     mutable ::boost::mutex m_Mutex;
     ::boost::condition_variable m_Condition;
-    mutable ::boost::mutex m_TerminateMutex;
-    bool m_SharedTerminate;
     T m_SharedObject;
     bool m_SharedObjectSet;
+    bool m_SharedTerminate;
 };
 
 }  // namespace concurrent
 
-#endif /* BLOCKINGACCESSOR_HPP_ */
+#endif /* CONCURRENTSLOT_HPP_ */

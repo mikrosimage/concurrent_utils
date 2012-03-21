@@ -1,2 +1,5 @@
-
+project
+    :
+    : build-dir bin
+    ;
 use-project /boost 						: [ modules.peek : BOOST_ROOT ] ;
