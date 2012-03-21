@@ -5,7 +5,7 @@
  *      Author: Guillaume Chatelet
  */
 
-#include <concurrent/ConcurrentSlot.hpp>
+#include <concurrent/Slot.hpp>
 
 #define BOOST_TEST_MODULE ConcurrentSlotTestModule
 #include <boost/test/unit_test.hpp>
@@ -18,14 +18,14 @@ BOOST_AUTO_TEST_SUITE( ConcurrentSlotTestSuite )
 BOOST_AUTO_TEST_CASE( uninitialized )
 {
     bool dummy;
-    ConcurrentSlot<bool> uninitialized;
+    Slot<bool> uninitialized;
     BOOST_CHECK( ! uninitialized.tryGet(dummy) );
 }
 
 BOOST_AUTO_TEST_CASE( initialized )
 {
     bool dummy = false;
-    ConcurrentSlot<bool> initialized(true);
+    Slot<bool> initialized(true);
     // taking value
     BOOST_CHECK( initialized.tryGet(dummy) );
     BOOST_CHECK_EQUAL( true, dummy );
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE( initialized )
 BOOST_AUTO_TEST_CASE( termination )
 {
     bool dummy = false;
-    ConcurrentSlot<bool> slot(true);
+    Slot<bool> slot(true);
     slot.terminate();
     // termination mode, accessors should throw
     BOOST_CHECK_THROW( slot.set(false), concurrent::terminated );

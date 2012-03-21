@@ -8,7 +8,7 @@
 #ifndef CONCURRENTQUEUEADAPTOR_HPP_
 #define CONCURRENTQUEUEADAPTOR_HPP_
 
-#include <concurrent/ConcurrentQueue.hpp>
+#include <concurrent/Queue.hpp>
 
 namespace concurrent {
 

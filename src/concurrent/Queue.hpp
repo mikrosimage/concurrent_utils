@@ -12,9 +12,12 @@ namespace concurrent {
 
 /**
  * Unbounded concurrent queue for safe access from several threads.
+ *
+ * Please note that a single Mutex is used for synchronization of front() and back()
+ * thus leading to contention if consumer and producer are many.
  */
 template<typename T, typename Container = std::deque<T> >
-struct ConcurrentQueue : private boost::noncopyable {
+struct Queue : private boost::noncopyable {
 public:
     typedef Container container_type;
     typedef typename Container::value_type value_type;

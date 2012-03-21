@@ -5,7 +5,7 @@
  *      Author: Guillaume Chatelet
  */
 
-#include <concurrent/ConcurrentSlot.hpp>
+#include <concurrent/Slot.hpp>
 #include <concurrent/Response.hpp>
 
 #include <boost/thread.hpp>
@@ -13,7 +13,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-concurrent::ConcurrentSlot<int> input; ///< shared
+concurrent::Slot<int> input; ///< shared
 concurrent::Response response; ///< shared
 
 void worker() {

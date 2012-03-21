@@ -24,11 +24,11 @@ namespace concurrent {
  * By setting terminate to true, getters/setters will throw a terminated exception
  */
 template<typename T>
-struct ConcurrentSlot : private boost::noncopyable {
-    ConcurrentSlot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
+struct Slot : private boost::noncopyable {
+    Slot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
     }
 
-    ConcurrentSlot(const T&object) : m_SharedObject(object), m_SharedObjectSet(true), m_SharedTerminate(false) {
+    Slot(const T&object) : m_SharedObject(object), m_SharedObjectSet(true), m_SharedTerminate(false) {
     }
 
     void set(const T& object) {

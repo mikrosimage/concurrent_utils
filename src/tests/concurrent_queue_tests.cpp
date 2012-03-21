@@ -1,5 +1,5 @@
-#include <concurrent/ConcurrentQueueAdaptor.hpp>
-#include <concurrent/ConcurrentQueue.hpp>
+#include <concurrent/QueueAdaptor.hpp>
+#include <concurrent/Queue.hpp>
 
 #include <list>
 #include <vector>
@@ -13,7 +13,7 @@
 using namespace std;
 using namespace concurrent;
 
-typedef ConcurrentQueue<int> IntConcurrentQueue;
+typedef Queue<int> IntConcurrentQueue;
 
 BOOST_AUTO_TEST_SUITE( ConcurrentQueueTestSuite )
 

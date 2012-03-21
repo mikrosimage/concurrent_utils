@@ -1,2 +1,10 @@
 
 exe ConcurrentSlot : ConcurrentSlot.cpp ;
+
+install bin		: ConcurrentSlot 
+				:
+				    <install-dependencies>on
+				    <install-type>SHARED_LIB
+				    <install-type>SEARCHED_LIB
+				    <install-type>EXE
+				;
