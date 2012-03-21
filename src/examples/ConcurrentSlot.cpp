@@ -6,6 +6,7 @@
  */
 
 #include <concurrent/ConcurrentSlot.hpp>
+#include <concurrent/Response.hpp>
 
 #include <boost/thread.hpp>
 
@@ -13,7 +14,7 @@
 #include <cstdlib>
 
 concurrent::ConcurrentSlot<int> input; ///< shared
-concurrent::ConcurrentSlot<bool> ack; ///< shared
+concurrent::Response response; ///< shared
 
 void worker() {
     try {
@@ -21,7 +22,7 @@ void worker() {
             int value;
             input.waitGet(value);
             printf("worker got : %d\n", value);
-            ack.set(true);
+            response.ack();
         }
     } catch (concurrent::terminated &e) {
         printf("worker terminates\n");
@@ -31,11 +32,10 @@ void worker() {
 int main(int argc, char **argv) {
     boost::thread worker_thread(&::worker);
 
-    bool dummy;
     for (int i = 0; i < 10; ++i) {
         printf("main sending : %d\n", i);
         input.set(i);
-        ack.waitGet(dummy);
+        response.wait();
     }
 
     printf("main sending termination\n");
