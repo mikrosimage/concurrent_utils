@@ -1,8 +1,13 @@
-project
-    :
-    : build-dir bin
-    ;
-use-project /boost 						: [ modules.peek : BOOST_ROOT ] ;
+use-project /boost : [ modules.peek : BOOST_ROOT ] ;
 
-alias tests : src/tests ;
-alias examples : src/examples ;
+project
+    : requirements
+        <library>/boost//thread/<link>shared
+        <include>.
+    :  usage-requirements 
+        <library>/boost//thread/<link>shared
+        <include>.
+    :  build-dir bin
+    ;
+
+alias concurrent ;
