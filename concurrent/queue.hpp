@@ -21,8 +21,8 @@ struct queue : public details::queue_base< queue<T>, Container > {
     typedef Container container_type;
     typedef typename Container::value_type value_type;
     typedef typename Container::const_reference const_reference;
-    typedef typename boost::call_traits<value_type>::reference reference;
-    typedef typename boost::call_traits<value_type>::param_type param_type;
+
+    BOOST_CONCEPT_ASSERT((boost::CopyConstructible<value_type>));
 
 private:
     typedef queue<T, Container> ME;
@@ -37,7 +37,7 @@ private:
         m_container.push_back(value);
     }
     inline value_type _pop() {
-        value_type tmp = m_container.front();
+        value_type tmp(m_container.front());
         m_container.pop_front();
         return tmp;
     }

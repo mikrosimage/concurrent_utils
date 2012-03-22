@@ -12,16 +12,24 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/call_traits.hpp>
 
+#include <boost/concept_check.hpp>
+
 namespace concurrent {
 namespace details {
 
-template <typename Derived, typename Container>
+/**
+ * base implementation of the queues functionalities via Static Polymorphism
+ * and use of the CRTP ( Curiously Recurring Template Pattern )
+ */
+template<typename Derived, typename Container>
 struct queue_base : private boost::noncopyable {
     typedef Container container_type;
     typedef typename container_type::size_type size_type;
     typedef typename container_type::value_type value_type;
     typedef typename boost::call_traits<value_type>::reference reference;
     typedef typename boost::call_traits<value_type>::param_type param_type;
+
+    BOOST_CONCEPT_ASSERT((boost::Assignable<value_type>));
 
     void push(param_type value) {
         boost::mutex::scoped_lock lock(m_mutex);
@@ -32,14 +40,11 @@ struct queue_base : private boost::noncopyable {
 
     bool tryPush(param_type value) {
         boost::mutex::scoped_lock lock(m_mutex);
-        if (exact()->is_not_full()) {
-            exact()->_push(value);
-            value = exact()->_pop();
-            unlockAndNotifyNotEmpty(lock);
-            return true;
-        } else {
-            return false;
-        }
+        if (!exact()->is_not_full())
+            return false; // full
+        exact()->_push(value);
+        unlockAndNotifyNotEmpty(lock);
+        return true;
     }
 
     void pop(reference value) {
@@ -51,19 +56,16 @@ struct queue_base : private boost::noncopyable {
 
     bool tryPop(reference value) {
         boost::mutex::scoped_lock lock(m_mutex);
-        if (exact()->is_not_empty()) {
-            value = exact()->_pop();
-            unlockAndNotifyNotFull(lock);
-            return true;
-        } else {
-            return false;
-        }
+        if (!exact()->is_not_empty())
+            return false; // empty
+        value = exact()->_pop();
+        unlockAndNotifyNotFull(lock);
+        return true;
     }
 
     void clear() {
-        // locking the shared object
         boost::mutex::scoped_lock lock(m_mutex);
-        if(exact()->is_not_empty()){
+        if (exact()->is_not_empty()) {
             exact()->_clear();
             unlockAndNotifyNotFull(lock);
         }
@@ -101,18 +103,21 @@ private:
             from.pop_front();
         }
     }
-    void unlockAndNotifyNotFull(boost::mutex::scoped_lock &lock) {
+
+    inline void unlockAndNotifyNotFull(boost::mutex::scoped_lock &lock) {
         lock.unlock();
         exact()->notify_not_full();
     }
-    void unlockAndNotifyNotEmpty(boost::mutex::scoped_lock &lock) {
+
+    inline void unlockAndNotifyNotEmpty(boost::mutex::scoped_lock &lock) {
         lock.unlock();
         exact()->notify_not_empty();
     }
+
     ::boost::mutex m_mutex;
 };
 
-}  // namespace details
-}  // namespace concurrent
+} // namespace details
+} // namespace concurrent
 
 #endif /* COMMON_QUEUE_HPP_ */
