@@ -72,9 +72,9 @@ public:
 
     template<typename CompatibleContainer>
     bool drainTo(CompatibleContainer& collection) {
+        boost::mutex::scoped_lock lock(m_mutex);
         if (m_container.empty())
             return false;
-        boost::mutex::scoped_lock lock(m_mutex);
         drain<container_type, CompatibleContainer>(m_container, collection);
         unlockAndNotifyNotFull(lock);
         return true;
