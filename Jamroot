@@ -3,10 +3,10 @@ use-project /boost : [ modules.peek : BOOST_ROOT ] ;
 project
     : requirements
         <library>/boost//thread/<link>shared
-        <include>src
+        <include>include
     :  usage-requirements 
         <library>/boost//thread/<link>shared
-        <include>src
+        <include>include
     :  build-dir bin
     ;
 

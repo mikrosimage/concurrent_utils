@@ -28,9 +28,37 @@ public:
 
     void push(param_type value) {
         boost::mutex::scoped_lock lock(m_mutex);
+        wait_not_full(lock);
         _push(value);
-        lock.unlock();
-        m_not_empty.notify_one();
+        unlockAndNotifyNotEmpty(lock);
+    }
+
+    //bool tryPush(param_type value);
+
+    void waitPop(reference value) {
+        boost::mutex::scoped_lock lock(m_mutex);
+        wait_not_empty(lock);
+        value = _pop();
+        unlockAndNotifyNotFull(lock);
+    }
+
+    bool tryPop(reference value) {
+        boost::mutex::scoped_lock lock(m_mutex);
+        if (is_not_empty()) {
+            value = _pop();
+            unlockAndNotifyNotFull(lock);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void clear() {
+        boost::mutex::scoped_lock lock(m_mutex);
+        if(is_not_empty()){
+            _clear();
+            unlockAndNotifyNotFull(lock);
+        }
     }
 
     template<typename CompatibleContainer>
@@ -38,39 +66,42 @@ public:
         if (collection.empty())
             return;
         boost::mutex::scoped_lock lock(m_mutex);
-        drain<CompatibleContainer, Container>(collection, m_container);
-        m_not_empty.notify_one();
-    }
-
-    void waitPop(reference value) {
-        boost::mutex::scoped_lock lock(m_mutex);
-        m_not_empty.wait(lock, boost::bind(&queue<value_type>::is_not_empty, this));
-        value = _pop();
-    }
-
-    bool tryPop(reference value) {
-        boost::mutex::scoped_lock lock(m_mutex);
-        if (is_not_empty()) {
-            value = _pop();
-            return true;
-        } else {
-            return false;
-        }
+        drain<CompatibleContainer, container_type>(collection, m_container);
+        unlockAndNotifyNotEmpty(lock);
     }
 
     template<typename CompatibleContainer>
     bool drainTo(CompatibleContainer& collection) {
         if (m_container.empty())
             return false;
-        drain<Container, CompatibleContainer>(m_container, collection);
+        boost::mutex::scoped_lock lock(m_mutex);
+        drain<container_type, CompatibleContainer>(m_container, collection);
+        unlockAndNotifyNotFull(lock);
         return true;
     }
 
-    void clear() {
-        boost::mutex::scoped_lock lock(m_mutex);
+private:
+    template<typename C1, typename C2>
+    inline static void drain(C1& from, C2& to) {
+        while (!from.empty()) {
+            to.push_back(from.front());
+            from.pop_front();
+        }
+    }
+    void unlockAndNotifyNotFull(boost::mutex::scoped_lock &lock) {
+        lock.unlock();
+        notify_not_full();
+    }
+    void unlockAndNotifyNotEmpty(boost::mutex::scoped_lock &lock) {
+        lock.unlock();
+        notify_not_empty();
+    }
+    ::boost::mutex m_mutex;
+private:
+    // container specific
+    inline void _clear() {
         m_container.clear();
     }
-private:
     inline void _push(value_type value) {
         m_container.push_back(value);
     }
@@ -79,23 +110,24 @@ private:
         m_container.pop_front();
         return tmp;
     }
+    inline void wait_not_empty(boost::mutex::scoped_lock &lock) {
+        m_not_empty.wait(lock, boost::bind(&queue<value_type>::is_not_empty, this));
+    }
+    inline void wait_not_full(boost::mutex::scoped_lock &lock) {
+    }
     inline bool is_not_empty() const {
         return !m_container.empty();
     }
     inline bool is_not_full() const {
         return true;
     }
-
-    template<typename C1, typename C2>
-    inline static void drain(C1& from, C2& to) {
-        while (!from.empty()) {
-            to.push_back(from.front());
-            from.pop_front();
-        }
+    inline void notify_not_full() {
+    }
+    inline void notify_not_empty() {
+        m_not_empty.notify_one();
     }
 
     container_type m_container;
-    ::boost::mutex m_mutex;
     ::boost::condition_variable m_not_empty;
 };
 
