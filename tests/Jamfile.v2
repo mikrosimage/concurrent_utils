@@ -7,6 +7,9 @@ project : requirements
             <library>/boost//unit_test_framework
             ;
 
-unit-test concurrent_slot_tests : concurrent_slot_tests.cpp ;
+local files = [ glob *.cpp ] ;
+local targets = $(files:B) ;
 
-unit-test concurrent_queue_tests : concurrent_queue_tests.cpp ;
+for local target in $(targets) {
+	unit-test $(target) : $(target).cpp ;
+}

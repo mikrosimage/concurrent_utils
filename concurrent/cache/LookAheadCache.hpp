@@ -8,7 +8,7 @@
 #ifndef LOOK_AHEAD_CACHE_HPP_
 #define LOOK_AHEAD_CACHE_HPP_
 
-#include <concurrent/BlockingAccessor.hpp>
+#include <concurrent/slot.hpp>
 #include <concurrent/cache/PriorityCache.hpp>
 
 #include <boost/noncopyable.hpp>
@@ -110,7 +110,7 @@ private:
     mutable boost::mutex m_PopMutex;
     mutable boost::mutex m_CacheMutex;
     PriorityCache<id_type, metric_type, data_type> m_SharedCache;
-    BlockingAccessor<WorkUnitItr> m_PendingJob;
+    slot<WorkUnitItr> m_PendingJob;
     WorkUnitItr m_SharedWorkUnitItr;
 };
 

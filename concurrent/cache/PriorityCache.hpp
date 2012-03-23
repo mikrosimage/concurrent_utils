@@ -114,6 +114,7 @@ public:
         if (contains(id))
             throw std::logic_error("id is already present in cache");
 
+
         if (isFull()) {
             D_( std::cout << "cache is *full*, discarding " << id << std::endl);
             remove(id); // no more pending
@@ -201,8 +202,9 @@ private:
 
     metric_type currentWeight() const {
         metric_type sum = 0;
-        BOOST_FOREACH(const typename CacheContainer::value_type &pair, m_Cache)
+        BOOST_FOREACH(const typename CacheContainer::value_type &pair, m_Cache) {
             sum += pair.second.metric;
+        }
         return sum;
     }
 
