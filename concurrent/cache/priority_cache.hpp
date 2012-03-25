@@ -29,42 +29,46 @@
 #endif
 
 namespace concurrent {
-
 namespace cache {
 
 enum UpdateStatus {
     FULL, NEEDED, NOT_NEEDED
 };
 
+/**
+ * This is the backend for the look ahead cache. It is thread unsafe and
+ * not meant to be used directly.
+ */
 template<typename ID_TYPE, typename METRIC_TYPE, typename DATA_TYPE>
-struct PriorityCache : private boost::noncopyable {
+struct priority_cache : private boost::noncopyable {
     typedef ID_TYPE id_type;
     typedef METRIC_TYPE metric_type;
     typedef DATA_TYPE data_type;
-    typedef PriorityCache<ID_TYPE, METRIC_TYPE, DATA_TYPE> ME;
 
     BOOST_CONCEPT_ASSERT((boost::LessThanComparable<id_type>)); // for map
     BOOST_CONCEPT_ASSERT((boost::EqualityComparable<id_type>)); //
     BOOST_CONCEPT_ASSERT((boost::UnsignedInteger<metric_type>)); //
 
 private:
-    typedef std::deque<id_type>                  IdContainer;
-    typedef typename IdContainer::const_iterator IdsConstItr;
-    typedef typename IdContainer::iterator       IdsItr;
+    typedef std::deque<id_type> IdContainer;
+    typedef typename IdContainer::iterator IdItr;
 
-    struct DataElement {
-        metric_type metric;
+    struct WeightedData {
+        metric_type weight;
         data_type data;
-        DataElement(const metric_type &metric, const data_type &data) : metric(metric), data(data){}
+        WeightedData(const metric_type &weight, const data_type &data) :
+                        weight(weight), data(data) {
+        }
     };
-    typedef std::map<id_type, DataElement>          CacheContainer;
+
+    typedef std::map<id_type, WeightedData> CacheContainer;
     typedef typename CacheContainer::const_iterator CacheConstItr;
-    typedef typename CacheContainer::iterator       CacheItr;
+    typedef typename CacheContainer::iterator CacheItr;
 
 public:
-    PriorityCache(metric_type limit) :
-        m_CacheLimit(limit) {
-        D_( std::cout << "#############################################################################################################" << std::endl);
+    priority_cache(metric_type limit) :
+                    m_CacheLimit(limit) {
+        D_( std::cout << "########################################" << std::endl);
     }
 
     void dumpKeys(std::vector<id_type> &key_container) const {
@@ -74,7 +78,7 @@ public:
             key_container.push_back(pair.first);
     }
 
-    inline bool isFull() const {
+    inline bool full() const {
         return m_CacheLimit == 0 || contiguousWeight() > m_CacheLimit;
     }
 
@@ -82,21 +86,21 @@ public:
         return m_Cache.find(id) != m_Cache.end();
     }
 
-    inline bool isPending(id_type id) const {
+    inline bool pending(id_type id) const {
         return in(m_PendingIds, id);
     }
 
-    inline metric_type cacheSize() const {
+    inline metric_type weight() const {
         return currentWeight();
     }
 
     void discardPending() {
-        std::copy(m_PendingIds.rbegin(), m_PendingIds.rend(), std::front_inserter(m_DiscardableIds));
+        m_DiscardableIds.insert(m_DiscardableIds.begin(), m_PendingIds.begin(), m_PendingIds.end());
         m_PendingIds.clear();
     }
 
     UpdateStatus update(id_type id) {
-        if (isFull())
+        if (full())
             return FULL; //
         D_( std::cout << "Updating " << id << std::endl);
         const bool wasRequested = remove(id);
@@ -108,14 +112,13 @@ public:
     }
 
     bool put(const id_type &id, const metric_type weight, const data_type &data) {
-        D_( std::cout << "=============================================================================================================" << std::endl);
+        D_( std::cout << "========================================" << std::endl);
         if (weight == 0)
             throw std::logic_error("can't put an id with no weight");
         if (contains(id))
             throw std::logic_error("id is already present in cache");
 
-
-        if (isFull()) {
+        if (full()) {
             D_( std::cout << "cache is *full*, discarding " << id << std::endl);
             remove(id); // no more pending
             dump("cache full dump");
@@ -125,7 +128,7 @@ public:
             D_( std::cout << "trying to make room for " << id << std::endl);
             makeRoomFor(id, weight);
         }
-        if (isFull())
+        if (full())
             return false;
         addToCache(id, weight, data);
         return true;
@@ -139,11 +142,11 @@ public:
         return true;
     }
 
-    inline void setCacheSize(const metric_type size) {
+    inline void setMaxWeight(const metric_type size) {
         m_CacheLimit = size;
     }
 private:
-    void dump(const char* dumpMessage) const {
+    inline void dump(const char* dumpMessage) const {
 #ifdef DEBUG_CACHE
         using namespace std;
         cout << dumpMessage << endl;
@@ -153,31 +156,16 @@ private:
         cout << "discardables {" << endl;
         display(m_DiscardableIds);
         cout << "}" << endl;
-        cout << "-------------------------------------------------------------------------------------------------------------" << endl;
+        cout << "----------------------------------------" << endl;
 #endif
     }
-
-#ifdef DEBUG_CACHE
-    inline void display(const std::deque<id_type> &queue) const {
-        using namespace std;
-        for (typename deque<id_type>::const_iterator itr = queue.begin();itr!=queue.end();++itr) {
-            cout << *itr;
-            if (!in(queue, *itr)) {
-                cout << " [ ]";
-            } else {
-                cout << " [X]";
-            }
-            cout << endl;
-        }
-    }
-#endif
 
     inline static bool in(const IdContainer &container, const id_type &value) {
         return std::find(container.begin(), container.end(), value) != container.end();
     }
 
     inline static bool remove(IdContainer &container, const id_type &value) {
-        IdsItr itr = std::remove(container.begin(), container.end(), value);
+        IdItr itr = std::remove(container.begin(), container.end(), value);
         if (itr == container.end())
             return false;
         container.erase(itr, container.end());
@@ -195,7 +183,7 @@ private:
             const CacheConstItr &itr = m_Cache.find(id);
             if (itr == end)
                 return sum;
-            sum += itr->second.metric;
+            sum += itr->second.weight;
         }
         return sum;
     }
@@ -203,7 +191,7 @@ private:
     metric_type currentWeight() const {
         metric_type sum = 0;
         BOOST_FOREACH(const typename CacheContainer::value_type &pair, m_Cache) {
-            sum += pair.second.metric;
+            sum += pair.second.weight;
         }
         return sum;
     }
@@ -217,7 +205,7 @@ private:
 
     struct ContainsPredicate : public std::unary_function<bool, id_type> {
         ContainsPredicate(const CacheContainer &container) :
-                cache(container) {
+                        cache(container) {
         }
         bool operator()(const id_type& id) {
             return cache.find(id) == cache.end();
@@ -229,20 +217,20 @@ private:
         typedef typename IdContainer::reverse_iterator reverse_itr;
         D_( std::cout << "{ " << currentWeight() << std::endl);
 
-        IdsItr firstNonContiguous = std::find_if(m_PendingIds.begin(), m_PendingIds.end(), ContainsPredicate(m_Cache));
+        const IdItr firstMissing = std::find_if(m_PendingIds.begin(), m_PendingIds.end(), ContainsPredicate(m_Cache));
 
-        IdContainer allDiscardable;
-        std::copy(m_DiscardableIds.rbegin(), m_DiscardableIds.rend(), back_inserter(allDiscardable));
-        std::copy(m_PendingIds.rbegin(), reverse_itr(firstNonContiguous), back_inserter(allDiscardable));
+        IdContainer discardables(firstMissing, m_PendingIds.end());
+        discardables.insert(discardables.end(), m_DiscardableIds.begin(), m_DiscardableIds.end());
 
         const metric_type maxWeight = m_CacheLimit - weight;
-        BOOST_FOREACH(const id_type &id, allDiscardable) {
+        BOOST_REVERSE_FOREACH(const id_type &id, discardables) {
             evict(id);
             if (currentWeight() <= maxWeight)
                 break;
         } //
         D_( std::cout << "} " << currentWeight() << std::endl);
     }
+
 
     inline void evict(id_type id) {
         CacheItr itr = m_Cache.find(id);
@@ -256,7 +244,7 @@ private:
     inline void addToCache(const id_type &id, const metric_type weight, const data_type &data) {
         if (!(in(m_PendingIds, id) || in(m_DiscardableIds, id)))
             m_DiscardableIds.push_back(id);
-        m_Cache.insert(std::make_pair(id, DataElement ( weight, data )));
+        m_Cache.insert(std::make_pair(id, WeightedData(weight, data)));
         D_( std::cout << "+ " << id << std::endl);
     }
 
@@ -268,7 +256,6 @@ private:
 };
 
 } // namespace cache
-
-}  // namespace concurrent
+} // namespace concurrent
 
 #endif /* PRIORITYCACHE_HPP_ */

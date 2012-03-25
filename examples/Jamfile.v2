@@ -5,7 +5,7 @@ for local target in $(targets) {
 	exe $(target) : $(target).cpp ;
 }
 
-install dist	: $(targets)
+install bin	: $(targets)
 				:
 				    <install-dependencies>on
 				    <install-type>SHARED_LIB

@@ -8,8 +8,9 @@
 #ifndef LOOK_AHEAD_CACHE_HPP_
 #define LOOK_AHEAD_CACHE_HPP_
 
+#include "priority_cache.hpp"
+
 #include <concurrent/slot.hpp>
-#include <concurrent/cache/PriorityCache.hpp>
 
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
@@ -24,43 +25,50 @@ namespace concurrent {
 
 namespace cache {
 
+/**
+ *
+ */
 template<typename ID_TYPE, typename METRIC_TYPE, typename DATA_TYPE, typename WORK_UNIT_RANGE>
-struct LookAheadCache {
+struct lookahead_cache {
     typedef ID_TYPE id_type;
     typedef METRIC_TYPE metric_type;
     typedef DATA_TYPE data_type;
     typedef WORK_UNIT_RANGE WorkUnitItr;
 
-    LookAheadCache(const metric_type cache_limit) :
-        m_SharedCache(cache_limit), m_PendingJob(WorkUnitItr()) {
+    BOOST_CONCEPT_ASSERT((boost::DefaultConstructible<WORK_UNIT_RANGE>));
+
+
+    lookahead_cache(const metric_type cache_limit) :
+        m_SharedCache(cache_limit) {
     }
 
     // Cache functions
-    inline void setCacheSize(const metric_type size) {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
-        m_SharedCache.setCacheSize(size);
-    }
-
-    inline metric_type dumpKeys(std::vector<id_type> &allKeys) const {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
-        m_SharedCache.dumpKeys(allKeys);
-        return m_SharedCache.cacheSize();
-    }
-
     inline bool get(const id_type &id, data_type &data) const {
         boost::mutex::scoped_lock lock(m_CacheMutex);
         return m_SharedCache.get(id, data);
     }
 
-    inline bool put(const id_type &id, const metric_type weight, const data_type &data) {
+    inline metric_type dumpKeys(std::vector<id_type> &allKeys) const {
         boost::mutex::scoped_lock lock(m_CacheMutex);
-        return m_SharedCache.put(id, weight, data);
+        m_SharedCache.dumpKeys(allKeys);
+        return m_SharedCache.weight();
+    }
+
+    void pushNewJob(const WorkUnitItr &job) {
+        m_PendingJob.set(job);
+    }
+
+    inline void setCacheSize(const metric_type size) {
+        boost::mutex::scoped_lock lock(m_CacheMutex);
+        m_SharedCache.setCacheSize(size);
+    }
+    void terminate(bool value = true) {
+        m_PendingJob.terminate(value);
     }
 
     // worker functions
-
-    void waitAndPop(id_type &unit) {
-        boost::mutex::scoped_lock lock(m_PopMutex);
+    void popWorkItem(id_type &unit) {
+        boost::mutex::scoped_lock lock(m_WorkerMutex);
         do {
             unit = nextWorkUnit();
             D_( std::cout << "next unit is : " << unit.filename << std::endl);
@@ -80,12 +88,9 @@ struct LookAheadCache {
         } while (true);
     }
 
-    void pushJob(const WorkUnitItr &job) {
-        m_PendingJob.set(job);
-    }
-
-    void terminate(bool value = true) {
-        m_PendingJob.terminate(value);
+    inline bool putWorkItem(const id_type &id, const metric_type weight, const data_type &data) {
+        boost::mutex::scoped_lock lock(m_CacheMutex);
+        return m_SharedCache.put(id, weight, data);
     }
 
 private:
@@ -107,9 +112,9 @@ private:
         return updated;
     }
 
-    mutable boost::mutex m_PopMutex;
+    boost::mutex m_WorkerMutex;
     mutable boost::mutex m_CacheMutex;
-    PriorityCache<id_type, metric_type, data_type> m_SharedCache;
+    priority_cache<id_type, metric_type, data_type> m_SharedCache;
     slot<WorkUnitItr> m_PendingJob;
     WorkUnitItr m_SharedWorkUnitItr;
 };

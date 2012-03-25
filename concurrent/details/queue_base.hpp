@@ -35,7 +35,7 @@ struct queue_base : private boost::noncopyable {
         boost::mutex::scoped_lock lock(m_mutex);
         exact()->wait_not_full(lock);
         exact()->_push(value);
-        unlockAndNotifyNotEmpty(lock);
+        exact()->notify_not_empty();
     }
 
     bool tryPush(param_type value) {
@@ -43,7 +43,7 @@ struct queue_base : private boost::noncopyable {
         if (!exact()->is_not_full())
             return false; // full
         exact()->_push(value);
-        unlockAndNotifyNotEmpty(lock);
+        exact()->notify_not_empty();
         return true;
     }
 
@@ -51,7 +51,7 @@ struct queue_base : private boost::noncopyable {
         boost::mutex::scoped_lock lock(m_mutex);
         exact()->wait_not_empty(lock);
         value = exact()->_pop();
-        unlockAndNotifyNotFull(lock);
+        exact()->notify_not_full();
     }
 
     bool tryPop(reference value) {
@@ -59,7 +59,7 @@ struct queue_base : private boost::noncopyable {
         if (!exact()->is_not_empty())
             return false; // empty
         value = exact()->_pop();
-        unlockAndNotifyNotFull(lock);
+        exact()->notify_not_full();
         return true;
     }
 
@@ -67,7 +67,7 @@ struct queue_base : private boost::noncopyable {
         boost::mutex::scoped_lock lock(m_mutex);
         if (exact()->is_not_empty()) {
             exact()->_clear();
-            unlockAndNotifyNotFull(lock);
+            exact()->notify_not_full();
         }
     }
 
@@ -77,7 +77,7 @@ struct queue_base : private boost::noncopyable {
             return;
         boost::mutex::scoped_lock lock(m_mutex);
         drain<CompatibleContainer, container_type>(collection, exact()->m_container);
-        unlockAndNotifyNotEmpty(lock);
+        exact()->notify_not_empty();
     }
 
     template<typename CompatibleContainer>
@@ -85,7 +85,7 @@ struct queue_base : private boost::noncopyable {
         boost::mutex::scoped_lock lock(m_mutex);
         if (exact()->is_not_empty()) {
             drain<container_type, CompatibleContainer>(exact()->m_container, collection);
-            unlockAndNotifyNotFull(lock);
+            exact()->notify_not_full();
             return true;
         }
         return false;
@@ -102,16 +102,6 @@ private:
             to.push_back(from.front());
             from.pop_front();
         }
-    }
-
-    inline void unlockAndNotifyNotFull(boost::mutex::scoped_lock &lock) {
-        lock.unlock();
-        exact()->notify_not_full();
-    }
-
-    inline void unlockAndNotifyNotEmpty(boost::mutex::scoped_lock &lock) {
-        lock.unlock();
-        exact()->notify_not_empty();
     }
 
     ::boost::mutex m_mutex;

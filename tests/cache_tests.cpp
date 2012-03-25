@@ -1,4 +1,4 @@
-#include <concurrent/cache/PriorityCache.hpp>
+#include <concurrent/cache/priority_cache.hpp>
 
 #include <iostream>
 
@@ -8,29 +8,29 @@
 using namespace std;
 using namespace concurrent::cache;
 
-typedef PriorityCache<size_t, size_t, int> CACHE;
+typedef priority_cache<size_t, size_t, int> CACHE;
 
 BOOST_AUTO_TEST_SUITE( CacheTestSuite )
 
 BOOST_AUTO_TEST_CASE( cacheFullness )
 {
-    BOOST_CHECK( CACHE(0).isFull() );
-    BOOST_CHECK( ! CACHE(1).isFull() );
+    BOOST_CHECK( CACHE(0).full() );
+    BOOST_CHECK( ! CACHE(1).full() );
 }
 
 BOOST_AUTO_TEST_CASE( cacheBasics )
 {
     CACHE cache(10);
-    BOOST_CHECK( ! cache.isPending(0) );
+    BOOST_CHECK( ! cache.pending(0) );
     BOOST_CHECK( ! cache.contains(0) );
     BOOST_CHECK_EQUAL( cache.update(0), NEEDED ); // creating
     BOOST_CHECK_EQUAL( cache.update(0), NOT_NEEDED ); // creating
-    BOOST_CHECK( cache.isPending(0) );// now pending
+    BOOST_CHECK( cache.pending(0) );// now pending
     BOOST_CHECK( ! cache.contains(0) );// but still not present
     BOOST_CHECK( cache.put(0,1,-1) );// putting
     BOOST_CHECK( cache.contains(0) );// now present
 
-    BOOST_CHECK_EQUAL( cache.cacheSize(),1u );// now present
+    BOOST_CHECK_EQUAL( cache.weight(),1u );// now present
 
     CACHE::data_type data;
     BOOST_CHECK( cache.get(0, data) );// getting is ok
@@ -82,10 +82,10 @@ BOOST_AUTO_TEST_CASE( cacheFull )
     CACHE cache(10);
     cache.update(0);
     cache.update(1);
-    BOOST_CHECK( ! cache.isFull() ); // not yet full
+    BOOST_CHECK( ! cache.full() ); // not yet full
     BOOST_CHECK( cache.put(0,11,-1) );
-    BOOST_CHECK( cache.isFull() );// full
-    BOOST_CHECK_EQUAL( cache.cacheSize(),11u );// now present
+    BOOST_CHECK( cache.full() );// full
+    BOOST_CHECK_EQUAL( cache.weight(),11u );// now present
     BOOST_CHECK( ! cache.put(1,1,1) );// can't put, we're full here
     BOOST_CHECK( ! cache.contains(1) );// data is not here
     CACHE::data_type data;
@@ -103,18 +103,18 @@ BOOST_AUTO_TEST_CASE( fullButHigherPriorityDiscardsRequested )
 
     // [_,_,2]
     BOOST_CHECK( cache.put(2,2,0) ); // pushing 2
-    BOOST_CHECK( ! cache.isFull() ); // not full, 0 is not there
+    BOOST_CHECK( ! cache.full() ); // not full, 0 is not there
     BOOST_CHECK( cache.contains(2) );
 
     // [_,1,_]
     BOOST_CHECK( cache.put(1,2,0) ); // pushing 1, removes 2
-    BOOST_CHECK( ! cache.isFull() ); // not full, 0 is not there
+    BOOST_CHECK( ! cache.full() ); // not full, 0 is not there
     BOOST_CHECK( cache.contains(1) );
     BOOST_CHECK( ! cache.contains(2) );
 
     // [0,_,_]
     BOOST_CHECK( cache.put(0,2,0) ); // pushing 0, removes 1
-    BOOST_CHECK( cache.isFull() ); // 0 is here, and cache is full
+    BOOST_CHECK( cache.full() ); // 0 is here, and cache is full
     BOOST_CHECK( cache.contains(0) );
     BOOST_CHECK( ! cache.contains(1) );
 }
@@ -137,11 +137,11 @@ BOOST_AUTO_TEST_CASE( discardPendings )
     // requested [], discardable [0,1,3]
     //           []              [_,X,_]
 
-    BOOST_CHECK_EQUAL( cache.cacheSize() ,2U);
+    BOOST_CHECK_EQUAL( cache.weight() ,2U);
     // jobs are not pending anymore
-    BOOST_CHECK( ! cache.isPending(0) );
-    BOOST_CHECK( ! cache.isPending(1) );
-    BOOST_CHECK( ! cache.isPending(3) );
+    BOOST_CHECK( ! cache.pending(0) );
+    BOOST_CHECK( ! cache.pending(1) );
+    BOOST_CHECK( ! cache.pending(3) );
     // but content is here
     BOOST_CHECK( cache.contains(1) );
 

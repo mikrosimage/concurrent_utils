@@ -1,0 +1,2 @@
+
+run cache_benchmark_tests.cpp : : data/gch.txt data/nro.txt ;
