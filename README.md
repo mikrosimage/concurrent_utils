@@ -12,27 +12,26 @@ Emphasis has been put on minimal interfaces and correctness.
 
 - - -
 
-Provided structures
+Provided facilities
 -------------------
 
 Have a look at the _example_ folder for some code. But here is a quick tour :
 
 ### concurrent::notifier
-
-A simple object allowing to wait for an acknowledgement.
+* A simple object allowing to wait for an acknowledgement.
 
 ### concurrent::slot
-An object holder with notification capabilities.
+* An object holder with notification capabilities.
 
 ### concurrent::queue
-An unlimited concurrent queue for passing messages between threads.
+* An unlimited concurrent queue for passing messages between threads.
 
 ### concurrent::bounded_queue
-A bounded concurrent queue for passing messages between threads.
+* A bounded concurrent queue for passing messages between threads.
 
 ### concurrent::cache::lookahead_cache
-A cache that fills itself automagically with the help of one or many worker threads.  
-This component is currently in use within [Duke](https://github.com/mikrosimage/duke) to enable image preloading but could be use anywhere you need to hide latencies (I/O over disk or network).
+* A cache that fills itself automagically with the help of one or more worker threads.
+This component is currently in use within [Duke](https://github.com/mikrosimage/duke) to enable image preloading but could be use anywhere you need to hide latencies (i.e. I/O over disk or network).
 
 - - -
 
