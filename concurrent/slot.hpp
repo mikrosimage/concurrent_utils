@@ -21,7 +21,7 @@ namespace concurrent {
 /**
  * Thread safe access to a T object
  *
- * By setting terminate to true, getters/setters will throw a terminated exception
+ * By setting terminate to true, getters will throw a terminated exception
  */
 template<typename T>
 struct slot : private boost::noncopyable {
@@ -34,9 +34,6 @@ struct slot : private boost::noncopyable {
     void set(const T& object) {
         // locking the shared object
         ::boost::mutex::scoped_lock lock(m_Mutex);
-
-        checkTermination();
-
         internal_set(object);
         lock.unlock();
         // notifying shared structure is updated
