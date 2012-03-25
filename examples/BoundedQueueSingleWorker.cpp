@@ -12,14 +12,16 @@
 #include <cstdlib>
 #include <cstdio>
 
-concurrent::bounded_queue<int> g_queue(3);
-const int sentinel = -1;
+
+const int sentinel_value = -1;
+const size_t queue_max_element = 3;
+concurrent::bounded_queue<int> g_queue(queue_max_element); ///< shared
 
 void worker() {
     int value = 0;
     for (;;) {
         g_queue.pop(value);
-        if (value == sentinel)
+        if (value == sentinel_value)
             return;
         printf("worker popped %d\n", value);
     }
@@ -33,7 +35,7 @@ int main(int argc, char **argv) {
         printf("main thread pushed %d\n", i);
     }
 
-    g_queue.push(sentinel);
+    g_queue.push(sentinel_value);
 
     worker_thread.join();
     return EXIT_SUCCESS;

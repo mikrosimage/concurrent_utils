@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <cstdio>
 
-concurrent::queue<int> g_queue;
+concurrent::queue<int> g_queue; ///< shared
 
 void worker() {
     int value = 0;
