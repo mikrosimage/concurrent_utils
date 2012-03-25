@@ -25,9 +25,6 @@ namespace concurrent {
 
 namespace cache {
 
-/**
- *
- */
 template<typename ID_TYPE, typename METRIC_TYPE, typename DATA_TYPE, typename WORK_UNIT_RANGE>
 struct lookahead_cache {
     typedef ID_TYPE id_type;
@@ -58,10 +55,11 @@ struct lookahead_cache {
         m_PendingJob.set(job);
     }
 
-    inline void setCacheSize(const metric_type size) {
+    inline void setMaxWeight(const metric_type size) {
         boost::mutex::scoped_lock lock(m_CacheMutex);
-        m_SharedCache.setCacheSize(size);
+        m_SharedCache.setMaxWeight(size);
     }
+
     void terminate(bool value = true) {
         m_PendingJob.terminate(value);
     }
