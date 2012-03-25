@@ -54,7 +54,7 @@ struct lookahead_cache {
         return m_SharedCache.weight();
     }
 
-    void pushNewJob(const WorkUnitItr &job) {
+    void process(const WorkUnitItr &job) {
         m_PendingJob.set(job);
     }
 
@@ -67,7 +67,7 @@ struct lookahead_cache {
     }
 
     // worker functions
-    void popWorkItem(id_type &unit) {
+    void pop(id_type &unit) {
         boost::mutex::scoped_lock lock(m_WorkerMutex);
         do {
             unit = nextWorkUnit();
@@ -88,7 +88,7 @@ struct lookahead_cache {
         } while (true);
     }
 
-    inline bool putWorkItem(const id_type &id, const metric_type weight, const data_type &data) {
+    inline bool push(const id_type &id, const metric_type weight, const data_type &data) {
         boost::mutex::scoped_lock lock(m_CacheMutex);
         return m_SharedCache.put(id, weight, data);
     }

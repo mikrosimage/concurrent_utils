@@ -6,9 +6,6 @@
 #include <deque>
 #include <fstream>
 
-//#define BOOST_TEST_MODULE BenchmarkTestModule
-//#include <boost/test/unit_test.hpp>
-
 using namespace std;
 using namespace concurrent::cache;
 using namespace boost::posix_time;
@@ -59,8 +56,6 @@ typedef size_t metric_type;
 typedef size_t data_type;
 typedef lookahead_cache<id_type, metric_type, data_type, Job> CACHE;
 
-//BOOST_AUTO_TEST_SUITE( BenchmarkTestSuite )
-
 concurrent::queue<id_type> decodeQueue;
 
 inline static void sleepFor(const size_t ms) {
@@ -85,9 +80,9 @@ void worker(CACHE &jobProducer) {
         while (true) {
             if (decodeQueue.tryPop(pUnit)) {
                 decode(*pUnit);
-                jobProducer.putWorkItem(pUnit, 1, 0);
+                jobProducer.push(pUnit, 1, 0);
             } else {
-                jobProducer.popWorkItem(pUnit);
+                jobProducer.pop(pUnit);
                 if (lastUnit(*pUnit)) {
                     jobProducer.terminate();
                     break;
@@ -101,7 +96,7 @@ void worker(CACHE &jobProducer) {
     }
     while (decodeQueue.tryPop(pUnit)) {
         decode(*pUnit);
-        jobProducer.putWorkItem(pUnit, 1, 0);
+        jobProducer.push(pUnit, 1, 0);
     }
 }
 
@@ -134,7 +129,7 @@ static inline time_duration launchBench(const char *filename, const size_t threa
     ptime start(microsec_clock::local_time());
 
     //pushing the job
-    cache.pushNewJob(Job(data));
+    cache.process(Job(data));
 
     // waiting for worker to stop
     group.join_all();
@@ -189,5 +184,3 @@ int main(int argc, char **argv) {
         }
     }
 }
-
-//BOOST_AUTO_TEST_SUITE_END()

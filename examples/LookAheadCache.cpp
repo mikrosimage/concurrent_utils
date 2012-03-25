@@ -79,12 +79,12 @@ void worker() {
         id_type id;
         for (;;) {
             // get some work
-            cache.popWorkItem(id);
+            cache.pop(id);
             // process
             std::ostringstream str;
             str << "data with value " << id;
             // push back to cache
-            cache.putWorkItem(id, 1, str.str());
+            cache.push(id, 1, str.str());
             // notifying main thread we did at least one element
             workerStarted.ack();
         }
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     boost::thread worker_thread(&::worker);
 
     // posting a first job
-    cache.pushNewJob(Job(1, 10));
+    cache.process(Job(1, 10));
 
     // waiting for the worker to start
     workerStarted.wait();
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     check(9);
 
     // posting another job
-    cache.pushNewJob(Job(1000, 20));
+    cache.process(Job(1000, 20));
 
     // checking some more data
     check(2);
