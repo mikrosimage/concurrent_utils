@@ -6,7 +6,7 @@
  */
 
 #include <concurrent/slot.hpp>
-#include <concurrent/response.hpp>
+#include <concurrent/notifier.hpp>
 
 #include <boost/thread.hpp>
 
@@ -14,7 +14,7 @@
 #include <cstdlib>
 
 concurrent::slot<int> input; ///< shared
-concurrent::response response; ///< shared
+concurrent::notifier notifier; ///< shared
 
 void worker() {
     try {
@@ -22,7 +22,7 @@ void worker() {
             int value;
             input.waitGet(value);
             printf("worker got : %d\n", value);
-            response.ack();
+            notifier.ack();
         }
     } catch (concurrent::terminated &e) {
         printf("worker terminates\n");
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 10; ++i) {
         printf("main sending : %d\n", i);
         input.set(i);
-        response.wait();
+        notifier.wait();
     }
 
     printf("main sending termination\n");

@@ -12,7 +12,7 @@
 
 namespace concurrent {
 
-struct response : private slot<bool> {
+struct notifier : private slot<bool> {
     void ack() {
         slot<bool>::set(true);
     }

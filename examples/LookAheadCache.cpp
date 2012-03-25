@@ -5,7 +5,7 @@
  *      Author: Guillaume Chatelet
  */
 
-#include <concurrent/response.hpp>
+#include <concurrent/notifier.hpp>
 #include <concurrent/cache/lookahead_cache.hpp>
 
 #include <boost/thread.hpp>
@@ -65,7 +65,7 @@ const size_t max_weight = 100;
 concurrent::cache::lookahead_cache<id_type, metric_type, data_type, Job> cache(max_weight);
 
 // a simple signal to the main thread that the worker is launched and processed a least one job.
-concurrent::response workerStarted;
+concurrent::notifier workerStarted;
 
 /**
  * The worker function will ask work from the cache, process it and
