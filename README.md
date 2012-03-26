@@ -31,7 +31,7 @@ Have a look at the _example_ folder for some code. But here is a quick tour :
 
 ### concurrent::cache::lookahead_cache
 * A cache that fills itself automagically with the help of one or more worker threads.
-This component is currently in use within [Duke](https://github.com/mikrosimage/duke) to enable image preloading but could be use anywhere you need to hide latencies (i.e. I/O over disk or network).
+This component is currently in use within [Duke](https://github.com/mikrosimage/duke) to enable image preloading but could be used whenever you need to hide latencies (i.e. I/O over disk or network).
 
 - - -
 
