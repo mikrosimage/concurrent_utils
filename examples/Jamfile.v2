@@ -5,8 +5,10 @@ for local target in $(targets) {
 	exe $(target) : $(target).cpp ;
 }
 
+path-constant HERE : . ;
 install bin	: $(targets)
 				:
+					<dll-path>$(HERE)/bin
 				    <install-dependencies>on
 				    <install-type>SHARED_LIB
 				    <install-type>SEARCHED_LIB

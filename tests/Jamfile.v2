@@ -3,8 +3,6 @@ import testing ;
 project : requirements 
             <toolset>gcc:<cxxflags>-isystem$(BOOST_ROOT)
             <define>BOOST_TEST_MAIN
-            <define>BOOST_TEST_DYN_LINK
-            <library>/boost//unit_test_framework
             ;
 
 local files = [ glob *.cpp ] ;

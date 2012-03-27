@@ -8,7 +8,7 @@
 #include <concurrent/slot.hpp>
 
 #define BOOST_TEST_MODULE ConcurrentSlotTestModule
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 
 using namespace concurrent;
 
@@ -38,8 +38,7 @@ BOOST_AUTO_TEST_CASE( termination )
     bool dummy = false;
     slot<bool> slot(true);
     slot.terminate();
-    // termination mode, accessors should throw
-    BOOST_CHECK_THROW( slot.set(false), concurrent::terminated );
+    // termination mode, getters should throw
     BOOST_CHECK_THROW( slot.tryGet(dummy), concurrent::terminated );
     BOOST_CHECK_THROW( slot.waitGet(dummy), concurrent::terminated );
     // back to normal operations
