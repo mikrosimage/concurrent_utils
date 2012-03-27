@@ -10,6 +10,11 @@ Design Rational
 ---------------
 Emphasis has been put on minimal interfaces and correctness.
 
+Quick start
+-----------
+This project is using **Boost.Build** for compilation.  
+I will add Makefiles and tutorial quickly but in the meantime you only have to **include this folder** and **BOOST_ROOT** and **link** against **boost_thread** : easy !!
+
 - - -
 
 Provided facilities
