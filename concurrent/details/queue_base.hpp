@@ -14,6 +14,8 @@
 
 #include <boost/concept_check.hpp>
 
+#include <iterator>
+
 namespace concurrent {
 namespace details {
 
@@ -98,10 +100,8 @@ private:
 
     template<typename C1, typename C2>
     inline static void drain(C1& from, C2& to) {
-        while (!from.empty()) {
-            to.push_back(from.front());
-            from.pop_front();
-        }
+        std::copy(from.begin(), from.end(), std::back_inserter(to));
+        from.clear();
     }
 
     ::boost::mutex m_mutex;
