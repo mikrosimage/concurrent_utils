@@ -8,7 +8,7 @@
 #include <concurrent/slot.hpp>
 
 #define BOOST_TEST_MODULE ConcurrentSlotTestModule
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace concurrent;
 

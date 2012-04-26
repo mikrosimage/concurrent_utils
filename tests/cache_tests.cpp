@@ -3,7 +3,7 @@
 #include <iostream>
 
 #define BOOST_TEST_MODULE CacheTestModule
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace std;
 using namespace concurrent::cache;
