@@ -8,7 +8,7 @@
 #include <concurrent/notifier.hpp>
 #include <concurrent/cache/lookahead_cache.hpp>
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include <sstream>
 #include <iterator>
@@ -60,12 +60,12 @@ struct Job {
 };
 
 // In this example each item has a cost of one, we're limiting the cache to 100 items.
-const size_t max_weight = 100;
+static const size_t max_weight = 100;
 // The actual cache.
-concurrent::cache::lookahead_cache<id_type, metric_type, data_type, Job> cache(max_weight);
+static concurrent::cache::lookahead_cache<id_type, metric_type, data_type, Job> cache(max_weight);
 
 // a simple signal to the main thread that the worker is launched and processed a least one job.
-concurrent::notifier workerStarted;
+static concurrent::notifier workerStarted;
 
 /**
  * The worker function will ask work from the cache, process it and
@@ -74,7 +74,7 @@ concurrent::notifier workerStarted;
  * If the cache is terminated, every call to popWorkItem will throw a
  * concurrent::terminated exception, an easy and safe way to stop the workers
  */
-void worker() {
+static void worker() {
     try {
         id_type id;
         for (;;) {
@@ -106,7 +106,7 @@ void check(id_type id) {
 int main(int argc, char **argv) {
     // For the sake of simplicity we're starting only one thread here
     // but you can add as many workers as you want.
-    boost::thread worker_thread(&::worker);
+    std::thread worker_thread(&::worker);
 
     // posting a first job
     cache.process(Job(1, 10));

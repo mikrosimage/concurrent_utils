@@ -10,10 +10,8 @@
 
 #include "common.hpp"
 
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/condition_variable.hpp>
-
+#include <mutex>
+#include <condition_variable>
 #include <cassert>
 
 namespace concurrent {
@@ -24,7 +22,7 @@ namespace concurrent {
  * By setting terminate to true, getters will throw a terminated exception
  */
 template<typename T>
-struct slot : private boost::noncopyable {
+struct slot : private noncopyable {
     slot() : m_SharedObjectSet(false), m_SharedTerminate(false) {
     }
 
@@ -33,7 +31,7 @@ struct slot : private boost::noncopyable {
 
     void set(const T& object) {
         // locking the shared object
-        ::boost::mutex::scoped_lock lock(m_Mutex);
+        std::unique_lock<std::mutex> lock(m_Mutex);
         internal_set(object);
         lock.unlock();
         // notifying shared structure is updated
@@ -41,14 +39,14 @@ struct slot : private boost::noncopyable {
     }
 
     void terminate(bool value = true) {
-        ::boost::unique_lock<boost::mutex> lock(m_Mutex);
+    	std::unique_lock<std::mutex> lock(m_Mutex);
         m_SharedTerminate = value;
         lock.unlock();
         m_Condition.notify_all();
     }
 
     void waitGet(T& value) {
-        ::boost::unique_lock<boost::mutex> lock(m_Mutex);
+    	std::unique_lock<std::mutex> lock(m_Mutex);
 
         checkTermination();
 
@@ -63,7 +61,7 @@ struct slot : private boost::noncopyable {
 
     bool tryGet(T& holder) {
         // locking the shared object
-        ::boost::lock_guard<boost::mutex> lock(m_Mutex);
+        ::std::lock_guard<std::mutex> lock(m_Mutex);
         checkTermination();
 
         if (!m_SharedObjectSet)
@@ -90,8 +88,8 @@ private:
         m_SharedObjectSet = false;
     }
 
-    mutable ::boost::mutex m_Mutex;
-    ::boost::condition_variable m_Condition;
+    mutable std::mutex m_Mutex;
+    ::std::condition_variable m_Condition;
     T m_SharedObject;
     bool m_SharedObjectSet;
     bool m_SharedTerminate;

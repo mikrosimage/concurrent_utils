@@ -3,9 +3,8 @@
 
 #include "details/queue_base.hpp"
 
-#include <boost/thread/condition.hpp>
-#include <boost/bind.hpp>
-
+#include <condition_variable>
+#include <functional>
 #include <deque>
 
 namespace concurrent {
@@ -21,8 +20,6 @@ struct queue : public details::queue_base< queue<T>, Container > {
     typedef Container container_type;
     typedef typename Container::value_type value_type;
     typedef typename Container::const_reference const_reference;
-
-    BOOST_CONCEPT_ASSERT((boost::CopyConstructible<value_type>));
 
 private:
     typedef queue<T, Container> ME;
@@ -41,10 +38,10 @@ private:
         m_container.pop_front();
         return tmp;
     }
-    inline void wait_not_empty(boost::mutex::scoped_lock &lock) {
-        m_not_empty.wait(lock, boost::bind(&ME::is_not_empty, this));
+    inline void wait_not_empty(std::unique_lock<std::mutex> &lock) {
+        m_not_empty.wait(lock, std::bind(&ME::is_not_empty, this));
     }
-    inline void wait_not_full(boost::mutex::scoped_lock &lock) {
+    inline void wait_not_full(std::unique_lock<std::mutex> &lock) {
     }
     inline bool is_not_empty() const {
         return !m_container.empty();
@@ -59,7 +56,7 @@ private:
     }
 private:
     container_type m_container;
-    ::boost::condition_variable m_not_empty;
+    std::condition_variable m_not_empty;
 };
 
 } // namespace concurrent

@@ -1,98 +1,95 @@
 #include <concurrent/cache/priority_cache.hpp>
 
-#include <iostream>
+#include <gtest/gtest.h>
 
-#define BOOST_TEST_MODULE CacheTestModule
-#include <boost/test/included/unit_test.hpp>
+#include <iostream>
 
 using namespace std;
 using namespace concurrent::cache;
 
 typedef priority_cache<size_t, size_t, int> CACHE;
 
-BOOST_AUTO_TEST_SUITE( CacheTestSuite )
-
-BOOST_AUTO_TEST_CASE( cacheFullness )
+TEST(Cache, cacheFullness )
 {
-    BOOST_CHECK( CACHE(0).full() );
-    BOOST_CHECK( ! CACHE(1).full() );
+	EXPECT_TRUE( CACHE(0).full() );
+    EXPECT_FALSE( CACHE(1).full() );
 }
 
-BOOST_AUTO_TEST_CASE( cacheBasics )
+TEST(Cache, cacheBasics )
 {
     CACHE cache(10);
-    BOOST_CHECK( ! cache.pending(0) );
-    BOOST_CHECK( ! cache.contains(0) );
-    BOOST_CHECK_EQUAL( cache.update(0), NEEDED ); // creating
-    BOOST_CHECK_EQUAL( cache.update(0), NOT_NEEDED ); // creating
-    BOOST_CHECK( cache.pending(0) );// now pending
-    BOOST_CHECK( ! cache.contains(0) );// but still not present
-    BOOST_CHECK( cache.put(0,1,-1) );// putting
-    BOOST_CHECK( cache.contains(0) );// now present
+    EXPECT_FALSE( cache.pending(0) );
+    EXPECT_FALSE( cache.contains(0) );
+    EXPECT_EQ( NEEDED, cache.update(0)  ); // creating
+    EXPECT_EQ( NOT_NEEDED, cache.update(0)); // creating
+    EXPECT_TRUE( cache.pending(0) );// now pending
+    EXPECT_FALSE( cache.contains(0) );// but still not present
+    EXPECT_TRUE( cache.put(0,1,-1) );// putting
+    EXPECT_TRUE( cache.contains(0) );// now present
 
-    BOOST_CHECK_EQUAL( cache.weight(),1u );// now present
+    EXPECT_EQ( 1u, cache.weight() );// now present
 
     CACHE::data_type data;
-    BOOST_CHECK( cache.get(0, data) );// getting is ok
-    BOOST_CHECK_EQUAL( data, -1 );// data is correct
+    EXPECT_TRUE( cache.get(0, data) );// getting is ok
+    EXPECT_EQ( -1, data );// data is correct
 }
 
-BOOST_AUTO_TEST_CASE( noWeight )
+TEST(Cache, noWeight )
 {
     CACHE cache(1);
-    BOOST_CHECK_THROW( cache.put(0,0,-1), std::logic_error ); // no weight
+    EXPECT_THROW( cache.put(0,0,-1), std::logic_error ); // no weight
 }
 
-BOOST_AUTO_TEST_CASE( putEvenIfNotRequestedCanFit )
+TEST(Cache, putEvenIfNotRequestedCanFit )
 {
     CACHE cache(1);
     // putting an unneeded element
-    BOOST_CHECK( cache.put(5,1,-1) );
-    BOOST_CHECK( cache.contains(5) );// now present
+    EXPECT_TRUE( cache.put(5,1,-1) );
+    EXPECT_TRUE( cache.contains(5) );// now present
 
     // a new request would be priority and discard the previous one
     cache.update(0);// requesting 0
-    BOOST_CHECK( cache.put(0,1,2) );// should be accepted
-    BOOST_CHECK( cache.contains(0) );// should be present
-    BOOST_CHECK( ! cache.contains(5) );// should be discarded
+    EXPECT_TRUE( cache.put(0,1,2) );// should be accepted
+    EXPECT_TRUE( cache.contains(0) );// should be present
+    EXPECT_FALSE( cache.contains(5) );// should be discarded
 }
 
-BOOST_AUTO_TEST_CASE( putEvenIfNotRequestedButCantFit )
+TEST(Cache, putEvenIfNotRequestedButCantFit )
 {
     CACHE cache(1);
     cache.update(0); // requesting 0
-    BOOST_CHECK( cache.put(0,2,2) );// should be accepted
-    BOOST_CHECK( cache.contains(0) );// should be present
+    EXPECT_TRUE( cache.put(0,2,2) );// should be accepted
+    EXPECT_TRUE( cache.contains(0) );// should be present
 
     // putting an unneeded element that can't fit
-    BOOST_CHECK( ! cache.put(5,1,-1) );// not added
-    BOOST_CHECK( ! cache.contains(5) );// not present
+    EXPECT_FALSE( cache.put(5,1,-1) );// not added
+    EXPECT_FALSE( cache.contains(5) );// not present
 }
 
-BOOST_AUTO_TEST_CASE( alreadyInCache )
+TEST(Cache, alreadyInCache )
 {
     CACHE cache(1);
     cache.update(0);
     cache.put(0,1,-1);
-    BOOST_CHECK_THROW( cache.put(0,1,-1), std::logic_error ); // already in cache
+    EXPECT_THROW( cache.put(0,1,-1), std::logic_error ); // already in cache
 }
 
-BOOST_AUTO_TEST_CASE( cacheFull )
+TEST(Cache, cacheFull )
 {
     CACHE cache(10);
     cache.update(0);
     cache.update(1);
-    BOOST_CHECK( ! cache.full() ); // not yet full
-    BOOST_CHECK( cache.put(0,11,-1) );
-    BOOST_CHECK( cache.full() );// full
-    BOOST_CHECK_EQUAL( cache.weight(),11u );// now present
-    BOOST_CHECK( ! cache.put(1,1,1) );// can't put, we're full here
-    BOOST_CHECK( ! cache.contains(1) );// data is not here
+    EXPECT_FALSE( cache.full() ); // not yet full
+    EXPECT_TRUE( cache.put(0,11,-1) );
+    EXPECT_TRUE( cache.full() );// full
+    EXPECT_EQ( 11u, cache.weight() );// now present
+    EXPECT_FALSE( cache.put(1,1,1) );// can't put, we're full here
+    EXPECT_FALSE( cache.contains(1) );// data is not here
     CACHE::data_type data;
-    BOOST_CHECK( !cache.get(1, data) );// can't get 1
+    EXPECT_FALSE( cache.get(1, data) );// can't get 1
 }
 
-BOOST_AUTO_TEST_CASE( fullButHigherPriorityDiscardsRequested )
+TEST(Cache, fullButHigherPriorityDiscardsRequested )
 {
     CACHE cache(1);
 
@@ -102,24 +99,24 @@ BOOST_AUTO_TEST_CASE( fullButHigherPriorityDiscardsRequested )
     cache.update(2);
 
     // [_,_,2]
-    BOOST_CHECK( cache.put(2,2,0) ); // pushing 2
-    BOOST_CHECK( ! cache.full() ); // not full, 0 is not there
-    BOOST_CHECK( cache.contains(2) );
+    EXPECT_TRUE( cache.put(2,2,0) ); // pushing 2
+    EXPECT_FALSE( cache.full() ); // not full, 0 is not there
+    EXPECT_TRUE( cache.contains(2) );
 
     // [_,1,_]
-    BOOST_CHECK( cache.put(1,2,0) ); // pushing 1, removes 2
-    BOOST_CHECK( ! cache.full() ); // not full, 0 is not there
-    BOOST_CHECK( cache.contains(1) );
-    BOOST_CHECK( ! cache.contains(2) );
+    EXPECT_TRUE( cache.put(1,2,0) ); // pushing 1, removes 2
+    EXPECT_FALSE( cache.full() ); // not full, 0 is not there
+    EXPECT_TRUE( cache.contains(1) );
+    EXPECT_FALSE( cache.contains(2) );
 
     // [0,_,_]
-    BOOST_CHECK( cache.put(0,2,0) ); // pushing 0, removes 1
-    BOOST_CHECK( cache.full() ); // 0 is here, and cache is full
-    BOOST_CHECK( cache.contains(0) );
-    BOOST_CHECK( ! cache.contains(1) );
+    EXPECT_TRUE( cache.put(0,2,0) ); // pushing 0, removes 1
+    EXPECT_TRUE( cache.full() ); // 0 is here, and cache is full
+    EXPECT_TRUE( cache.contains(0) );
+    EXPECT_FALSE( cache.contains(1) );
 }
 
-BOOST_AUTO_TEST_CASE( discardPendings )
+TEST(Cache, discardPendings )
 {
     CACHE cache(10);
 
@@ -137,21 +134,19 @@ BOOST_AUTO_TEST_CASE( discardPendings )
     // requested [], discardable [0,1,3]
     //           []              [_,X,_]
 
-    BOOST_CHECK_EQUAL( cache.weight() ,2U);
+    EXPECT_EQ( 2U, cache.weight() );
     // jobs are not pending anymore
-    BOOST_CHECK( ! cache.pending(0) );
-    BOOST_CHECK( ! cache.pending(1) );
-    BOOST_CHECK( ! cache.pending(3) );
+    EXPECT_FALSE( cache.pending(0) );
+    EXPECT_FALSE( cache.pending(1) );
+    EXPECT_FALSE( cache.pending(3) );
     // but content is here
-    BOOST_CHECK( cache.contains(1) );
+    EXPECT_TRUE( cache.contains(1) );
 
     CACHE::data_type data;
-    BOOST_CHECK( cache.get(1, data) );
-    BOOST_CHECK_EQUAL( data, 42 );
+    EXPECT_TRUE( cache.get(1, data) );
+    EXPECT_EQ( 42, data );
 
-    BOOST_CHECK_EQUAL( cache.update(1), NOT_NEEDED );
+    EXPECT_EQ( NOT_NEEDED, cache.update(1) );
     // requested [1], discardable [0,3]
     //           [X]              [_,_]
 }
-
-BOOST_AUTO_TEST_SUITE_END()

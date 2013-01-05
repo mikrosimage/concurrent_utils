@@ -8,15 +8,15 @@
 #include <concurrent/slot.hpp>
 #include <concurrent/notifier.hpp>
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include <cstdio>
 #include <cstdlib>
 
-concurrent::slot<int> input; ///< shared
-concurrent::notifier notifier; ///< shared
+static concurrent::slot<int> input; ///< shared
+static concurrent::notifier notifier; ///< shared
 
-void worker() {
+static void worker() {
     try {
         for (;;) {
             int value;
@@ -30,7 +30,7 @@ void worker() {
 }
 
 int main(int argc, char **argv) {
-    boost::thread worker_thread(&::worker);
+    std::thread worker_thread(&::worker);
 
     for (int i = 0; i < 10; ++i) {
         printf("main sending : %d\n", i);

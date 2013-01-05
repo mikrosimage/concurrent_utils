@@ -12,10 +12,6 @@
 
 #include <concurrent/slot.hpp>
 
-#include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-
 #include <iostream>
 #include <map>
 #include <set>
@@ -32,8 +28,7 @@ struct lookahead_cache {
     typedef DATA_TYPE data_type;
     typedef WORK_UNIT_RANGE WorkUnitItr;
 
-    BOOST_CONCEPT_ASSERT((boost::DefaultConstructible<WORK_UNIT_RANGE>));
-
+    static_assert(std::is_default_constructible<WORK_UNIT_RANGE>::value, "WorkUnitItr should be default constructible");
 
     lookahead_cache(const metric_type cache_limit) :
         m_SharedCache(cache_limit) {
@@ -41,12 +36,12 @@ struct lookahead_cache {
 
     // Cache functions
     inline bool get(const id_type &id, data_type &data) const {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
+        std::lock_guard<std::mutex> lock(m_CacheMutex);
         return m_SharedCache.get(id, data);
     }
 
     inline metric_type dumpKeys(std::vector<id_type> &allKeys) const {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
+    	std::lock_guard<std::mutex> lock(m_CacheMutex);
         m_SharedCache.dumpKeys(allKeys);
         return m_SharedCache.weight();
     }
@@ -56,7 +51,7 @@ struct lookahead_cache {
     }
 
     inline void setMaxWeight(const metric_type size) {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
+    	std::lock_guard<std::mutex> lock(m_CacheMutex);
         m_SharedCache.setMaxWeight(size);
     }
 
@@ -66,11 +61,11 @@ struct lookahead_cache {
 
     // worker functions
     void pop(id_type &unit) {
-        boost::mutex::scoped_lock lock(m_WorkerMutex);
+    	std::lock_guard<std::mutex> lock(m_WorkerMutex);
         do {
             unit = nextWorkUnit();
             D_( std::cout << "next unit is : " << unit.filename << std::endl);
-            boost::mutex::scoped_lock lock(m_CacheMutex);
+            std::lock_guard<std::mutex> lock(m_CacheMutex);
             switch (m_SharedCache.update(unit)) {
                 case FULL:
                     D_( std::cout << "cache is full, emptying current job" << std::endl);
@@ -87,14 +82,14 @@ struct lookahead_cache {
     }
 
     inline bool push(const id_type &id, const metric_type weight, const data_type &data) {
-        boost::mutex::scoped_lock lock(m_CacheMutex);
+    	std::lock_guard<std::mutex> lock(m_CacheMutex);
         return m_SharedCache.put(id, weight, data);
     }
 
 private:
     inline id_type nextWorkUnit() {
         if (updateJob()) {
-            boost::mutex::scoped_lock lock(m_CacheMutex);
+        	std::lock_guard<std::mutex> lock(m_CacheMutex);
             m_SharedCache.discardPending();
         }
         return m_SharedWorkUnitItr.next();
@@ -110,8 +105,8 @@ private:
         return updated;
     }
 
-    boost::mutex m_WorkerMutex;
-    mutable boost::mutex m_CacheMutex;
+    std::mutex m_WorkerMutex;
+    mutable std::mutex m_CacheMutex;
     priority_cache<id_type, metric_type, data_type> m_SharedCache;
     slot<WorkUnitItr> m_PendingJob;
     WorkUnitItr m_SharedWorkUnitItr;
