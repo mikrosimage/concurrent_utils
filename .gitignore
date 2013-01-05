@@ -2,3 +2,9 @@ bin
 dist
 .cproject
 .project
+BoundedQueueSingleWorker
+ConcurrentSlot
+LookAheadCache
+QueueManyWorkers
+QueueSingleWorker
+test

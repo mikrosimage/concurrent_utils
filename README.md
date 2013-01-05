@@ -55,6 +55,8 @@ Tested compilers
 ----------------
 
 * GCC 4.7.2 on Gentoo Linux
+* GCC 4.6.3 on Gentoo Linux
+** use -std=c++0x instead of -std=c++11
 * ~~Clang 3.2~~ runs into this [GCC issue](http://clang-developers.42468.n3.nabble.com/Problem-with-gnu-libc-4-7-s-chrono-in-Clang-3-2-td4029343.html)
 
 - - -

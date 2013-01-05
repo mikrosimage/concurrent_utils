@@ -28,7 +28,9 @@ struct lookahead_cache {
     typedef DATA_TYPE data_type;
     typedef WORK_UNIT_RANGE WorkUnitItr;
 
+#if __cplusplus >= 201103L
     static_assert(std::is_default_constructible<WORK_UNIT_RANGE>::value, "WorkUnitItr should be default constructible");
+#endif
 
     lookahead_cache(const metric_type cache_limit) :
         m_SharedCache(cache_limit) {
