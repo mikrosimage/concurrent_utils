@@ -8,7 +8,7 @@
 #ifndef LOOK_AHEAD_CACHE_HPP_
 #define LOOK_AHEAD_CACHE_HPP_
 
-#include "priority_cache.hpp"
+#include "priority_cache_details.hpp"
 
 #include <concurrent/slot.hpp>
 
@@ -21,6 +21,17 @@ namespace concurrent {
 
 namespace cache {
 
+/**
+ * Synchronized look ahead cache
+ * Basic usage :
+ * - create cache
+ * - create one or several worker thread who will 'pop' units of work
+ * - for each unit the result of the process must be put back in the cache with 'push'
+ * - add an iterator to process whenever you want
+ *
+ * Cache will ensure every thread will stop by firing a 'terminated' exception
+ * upon 'pop' when terminate is set to true
+ */
 template<typename ID_TYPE, typename METRIC_TYPE, typename DATA_TYPE, typename WORK_UNIT_RANGE>
 struct lookahead_cache {
     typedef ID_TYPE id_type;
@@ -107,9 +118,9 @@ private:
         return updated;
     }
 
-    std::mutex m_WorkerMutex;
+    mutable std::mutex m_WorkerMutex;
     mutable std::mutex m_CacheMutex;
-    priority_cache<id_type, metric_type, data_type> m_SharedCache;
+    priority_cache_details<id_type, metric_type, data_type> m_SharedCache;
     slot<WorkUnitItr> m_PendingJob;
     WorkUnitItr m_SharedWorkUnitItr;
 };

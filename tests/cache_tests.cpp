@@ -7,7 +7,7 @@
 using namespace std;
 using namespace concurrent::cache;
 
-typedef priority_cache<size_t, size_t, int> CACHE;
+typedef priority_cache_details<size_t, size_t, int> CACHE;
 
 TEST(Cache, cacheFullness )
 {
