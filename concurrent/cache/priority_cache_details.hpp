@@ -200,7 +200,6 @@ private:
 	}
 
 	void makeRoomFor(const id_type currentId, const metric_type weight) {
-		typedef typename IdContainer::reverse_iterator reverse_itr;
 		D_( std::cout << "{ " << currentWeight() << std::endl);
 
 		const IdItr firstMissing = std::find_if(m_PendingIds.begin(), m_PendingIds.end(), [&](const id_type& id){

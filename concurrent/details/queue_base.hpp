@@ -30,7 +30,7 @@ struct queue_base: private noncopyable {
 	typedef typename call_traits<value_type>::param_type param_type;
 
 	static_assert(std::is_trivial<size_type>::value,"size_type must be trivial");
-	static_assert(std::is_trivial<value_type>::value,"value_type must be trivial");
+	static_assert(std::is_copy_assignable<value_type>::value,"value_type must be copy assignable");
 
 	void push(param_type value) {
 		std::unique_lock<std::mutex> lock(m_mutex);
