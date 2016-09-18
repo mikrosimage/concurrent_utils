@@ -69,7 +69,7 @@ struct lookahead_cache {
         boost::mutex::scoped_lock lock(m_WorkerMutex);
         do {
             unit = nextWorkUnit();
-            D_( std::cout << "next unit is : " << unit.filename << std::endl);
+            D_( std::cout << "next unit is : " << unit << std::endl);
             boost::mutex::scoped_lock lock(m_CacheMutex);
             switch (m_SharedCache.update(unit)) {
                 case FULL:

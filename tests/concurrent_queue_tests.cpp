@@ -8,7 +8,7 @@
 #include <boost/assign/list_of.hpp>
 
 #define BOOST_TEST_MODULE ConcurrentQueueTestModule
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace std;
 

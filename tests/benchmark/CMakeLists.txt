@@ -1,0 +1,4 @@
+
+ADD_EXECUTABLE(cache_benchmark_tests cache_benchmark_tests.cpp)
+TARGET_LINK_LIBRARIES(cache_benchmark_tests ${Boost_LIBRARIES})
+ADD_TEST(cache_benchmark_tests cache_benchmark_tests)
